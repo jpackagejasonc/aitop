@@ -108,6 +108,16 @@ The dashboard listens on a Unix socket (`~/.aitop/claudecode.sock`). Claude Code
 
 If `aitop` is not running, hook calls fail silently and do not affect Claude Code.
 
+### Subcommands
+
+| Command | Description |
+|---|---|
+| `aitop` | Start the TUI dashboard (default) |
+| `aitop version` | Print the version and exit |
+| `aitop install` | Print merged hook config for `~/.claude/settings.json` |
+| `aitop install --write` | Write hook config directly (atomic) |
+| `aitop hook` | Forward a hook event to the socket (called by Claude Code, not directly) |
+
 ## How it works
 
 ```
@@ -168,6 +178,14 @@ git clone https://github.com/jpackagejasonc/aitop
 cd aitop
 go build -o aitop ./cmd/aitop
 ```
+
+To embed a version at build time:
+
+```bash
+go build -ldflags "-X main.Version=1.2.3" -o aitop ./cmd/aitop
+```
+
+Untagged local builds report `0.0.0-dev`.
 
 Move the binary somewhere on your `$PATH`, then run `aitop install --write` to wire up the Claude Code hooks.
 

@@ -1,6 +1,56 @@
 package main
 
-import "testing"
+import (
+	"bytes"
+	"os"
+	"regexp"
+	"testing"
+)
+
+// semverRE is the canonical regex from semver.org.
+var semverRE = regexp.MustCompile(`^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)` +
+	`(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?` +
+	`(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`)
+
+func captureStdout(f func()) string {
+	r, w, _ := os.Pipe()
+	old := os.Stdout
+	os.Stdout = w
+	f()
+	w.Close()
+	os.Stdout = old
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	return buf.String()
+}
+
+func TestVersion_DefaultIsSemver(t *testing.T) {
+	if !semverRE.MatchString(Version) {
+		t.Errorf("default Version %q is not valid semver", Version)
+	}
+}
+
+func TestRunVersion_Output(t *testing.T) {
+	orig := Version
+	t.Cleanup(func() { Version = orig })
+
+	Version = "1.2.3"
+	got := captureStdout(runVersion)
+	if want := "aitop version 1.2.3\n"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestRunVersion_PreRelease(t *testing.T) {
+	orig := Version
+	t.Cleanup(func() { Version = orig })
+
+	Version = "2.0.0-alpha.1"
+	got := captureStdout(runVersion)
+	if want := "aitop version 2.0.0-alpha.1\n"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
 
 func TestHasAitopHook_EmptySlice(t *testing.T) {
 	if hasAitopHook(nil) {
