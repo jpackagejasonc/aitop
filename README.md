@@ -21,6 +21,7 @@ tok/min                16270         8060          5453
 cache hits             8900          22400         61200
 cache hit rate         41.7%         41.8%         41.1%
 cost ($)               $0.0142       $0.0381       $0.1024
+cost ($/hr)            $0.85/hr      $0.46/hr      $0.41/hr
 tool calls             9             24            63
 
 session
@@ -149,7 +150,6 @@ These are estimates. Check your Anthropic console for authoritative billing.
 ## Future plans
 
 - **Tool call duration** — pair `PreToolUse` and `PostToolUse` events by tool call ID to track per-tool latency (e.g. how long a `Bash` or `Edit` call takes)
-- **Projected hourly cost** — extrapolate a $/hr rate from the rolling window, similar to how cloud cost dashboards show spend rate
 - **Cache token breakdown** — split the input token count into fresh context, cache writes, and cache reads so it is clear where tokens are coming from each window
 - **Cross-model cost comparison** — using the actual token mix for the current session, show what the same usage would have cost on each model family; useful when deciding whether to switch models mid-session
 - **Alerts** — contextual warnings surfaced in the TUI: configurable daily budget exceeded, high burn rate, spending with zero output tokens (likely a tool loop), context window near full, cache efficiency collapsed after a compaction

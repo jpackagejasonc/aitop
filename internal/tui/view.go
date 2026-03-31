@@ -115,6 +115,8 @@ func (m Model) View() tea.View {
 		s.Window15m.CacheHits, s.Window15m.InputTokens))
 	b.WriteString(windowRowCost(l, "cost ($)",
 		s.Window1m.Cost, s.Window5m.Cost, s.Window15m.Cost))
+	b.WriteString(windowRowHourlyCost(l, "cost ($/hr)",
+		s.Window1m.Cost*60, s.Window5m.Cost*12, s.Window15m.Cost*4))
 	b.WriteString(windowRow(l, "tool calls",
 		s.Window1m.ToolCalls, s.Window5m.ToolCalls, s.Window15m.ToolCalls))
 
@@ -211,6 +213,16 @@ func windowRowCost(l layout, label string, v1, v5, v15 float64) string {
 		l.accent.Render(fmt.Sprintf("$%.4f", v1)) +
 		l.accent.Render(fmt.Sprintf("$%.4f", v5)) +
 		l.accent.Render(fmt.Sprintf("$%.4f", v15)) + "\n"
+}
+
+// windowRowHourlyCost renders projected hourly cost extrapolated from each
+// rolling window: 1m×60, 5m×12, 15m×4.
+func windowRowHourlyCost(l layout, label string, v1, v5, v15 float64) string {
+	f := func(v float64) string { return fmt.Sprintf("$%.2f/hr", v) }
+	return l.label.Render(label) +
+		l.accent.Render(f(v1)) +
+		l.accent.Render(f(v5)) +
+		l.accent.Render(f(v15)) + "\n"
 }
 
 // windowRowRate renders a row of per-minute rates (1 decimal place).

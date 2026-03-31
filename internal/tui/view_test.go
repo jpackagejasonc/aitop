@@ -117,6 +117,26 @@ func TestWindowRowCacheEff_MixedWindows(t *testing.T) {
 	}
 }
 
+func TestWindowRowHourlyCost_Format(t *testing.T) {
+	l := newLayout(80)
+	// $0.01 per minute → $0.60/hr
+	row := windowRowHourlyCost(l, "cost ($/hr)", 0.60, 0.60, 0.60)
+	if !strings.Contains(row, "$0.60/hr") {
+		t.Errorf("expected $0.60/hr in row, got: %q", row)
+	}
+}
+
+func TestWindowRowHourlyCost_Extrapolation(t *testing.T) {
+	l := newLayout(80)
+	// Different rates per window.
+	row := windowRowHourlyCost(l, "cost ($/hr)", 1.20, 0.60, 0.30)
+	for _, want := range []string{"$1.20/hr", "$0.60/hr", "$0.30/hr"} {
+		if !strings.Contains(row, want) {
+			t.Errorf("expected %s in row, got: %q", want, row)
+		}
+	}
+}
+
 func TestView_CacheHitRateRowPresent(t *testing.T) {
 	m := Model{
 		agg:   aggregator.New(),
@@ -126,6 +146,18 @@ func TestView_CacheHitRateRowPresent(t *testing.T) {
 	out := m.View().Content
 	if !strings.Contains(out, "cache hit rate") {
 		t.Error("expected 'cache hit rate' row in view output")
+	}
+}
+
+func TestView_HourlyCostRowPresent(t *testing.T) {
+	m := Model{
+		agg:   aggregator.New(),
+		width: 80,
+	}
+	m.snapshot = m.agg.Snapshot()
+	out := m.View().Content
+	if !strings.Contains(out, "cost ($/hr)") {
+		t.Error("expected 'cost ($/hr)' row in view output")
 	}
 }
 
