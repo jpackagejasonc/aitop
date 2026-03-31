@@ -44,6 +44,15 @@ Rolling windows (1m / 5m / 15m) behave like load averages in `top` — a quick r
 
 **Cache hit rate** shows `cache_read / (cache_read + input)` for each rolling window. It turns orange below 60% and red below 30%. A sudden drop usually means a compaction just reset the context.
 
+**Alerts** appear in red above the footer when conditions warrant immediate attention:
+
+| Alert | Condition |
+|---|---|
+| high burn rate | 1m window extrapolates to > $5/hr |
+| context window near full | context exceeds 80% of the 200K limit |
+| spending with no output tokens | cost > 0 and output tokens = 0 in the last minute (possible tool loop) |
+| cache efficiency low | 1m cache hit rate < 30% (context may have been reset) |
+
 **Context window** shows an estimate of current context size (`input + cache_read + cache_write` tokens from the last completed turn) against the 200K limit. It turns orange above 60% and red above 85%. After a compaction the figure drops as the conversation is summarized. **Compactions** counts how many times automatic context compaction has run.
 
 ## Install
@@ -152,7 +161,6 @@ These are estimates. Check your Anthropic console for authoritative billing.
 - **Tool call duration** — pair `PreToolUse` and `PostToolUse` events by tool call ID to track per-tool latency (e.g. how long a `Bash` or `Edit` call takes)
 - **Cache token breakdown** — split the input token count into fresh context, cache writes, and cache reads so it is clear where tokens are coming from each window
 - **Cross-model cost comparison** — using the actual token mix for the current session, show what the same usage would have cost on each model family; useful when deciding whether to switch models mid-session
-- **Alerts** — contextual warnings surfaced in the TUI: configurable daily budget exceeded, high burn rate, spending with zero output tokens (likely a tool loop), context window near full, cache efficiency collapsed after a compaction
 - **Session tagging** — label a session via an environment variable and track per-feature or per-initiative costs; useful for understanding where spend goes across a project
 - **Historical summaries** — persist session totals on exit and expose daily/weekly/monthly aggregates so cost trends are visible across sessions, not just within the current one
 - **Sparklines** — inline ASCII trend graphs alongside the rolling window numbers to make the direction of a metric visible at a glance

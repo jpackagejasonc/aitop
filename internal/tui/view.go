@@ -20,9 +20,10 @@ var (
 )
 
 const (
-	labelColWidth   = 22 // wide enough for "output tokens" + padding
+	labelColWidth   = 22     // wide enough for "output tokens" + padding
 	minValColWidth  = 10
-	defValColWidth  = 12 // used before first WindowSizeMsg
+	defValColWidth  = 12     // used before first WindowSizeMsg
+	contextLimit    = 200_000
 )
 
 // layout holds pre-built column styles for the current terminal width.
@@ -161,7 +162,6 @@ func (m Model) View() tea.View {
 	// Context window utilization — shown when we have at least one Stop event.
 	// Uses total input tokens (non-cached + cache-read + cache-write) as a
 	// proxy for current context size against the 200K limit.
-	const contextLimit = 200_000
 	if s.ContextTokens > 0 {
 		pct := float64(s.ContextTokens) / float64(contextLimit) * 100
 		ctxStr := fmt.Sprintf("%dK / %dK (%.0f%%)", s.ContextTokens/1000, contextLimit/1000, pct)
@@ -178,6 +178,14 @@ func (m Model) View() tea.View {
 	}
 	if s.CompactionCount > 0 {
 		b.WriteString(sessionRow(l, "compactions", valueStyle.Render(fmt.Sprintf("%d", s.CompactionCount))))
+	}
+
+	// ── Alerts ───────────────────────────────────────────────────────────────
+	if alerts := checkAlerts(s); len(alerts) > 0 {
+		b.WriteString("\n")
+		for _, alert := range alerts {
+			b.WriteString(errorStyle.Render("! " + alert) + "\n")
+		}
 	}
 
 	// ── Footer ────────────────────────────────────────────────────────────────
