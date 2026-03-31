@@ -161,6 +161,32 @@ func TestView_HourlyCostRowPresent(t *testing.T) {
 	}
 }
 
+func TestView_AlertsRenderedWhenTriggered(t *testing.T) {
+	m := Model{
+		agg:   aggregator.New(),
+		width: 80,
+	}
+	// $0.10/min → $6/hr, above the burn rate threshold.
+	m.snapshot = m.agg.Snapshot()
+	m.snapshot.Window1m.Cost = 0.10
+	out := m.View().Content
+	if !strings.Contains(out, "! high burn rate") {
+		t.Error("expected burn rate alert in view output")
+	}
+}
+
+func TestView_NoAlertsWhenNormal(t *testing.T) {
+	m := Model{
+		agg:   aggregator.New(),
+		width: 80,
+	}
+	m.snapshot = m.agg.Snapshot()
+	out := m.View().Content
+	if strings.Contains(out, "! ") {
+		t.Error("expected no alerts in view output for zero snapshot")
+	}
+}
+
 // lipglossVisibleWidth counts the visible runes in a string by stripping ANSI
 // escape sequences. We use a simple count here since lipgloss is already
 // handling the actual width math; we just want to verify it matches expectations.
