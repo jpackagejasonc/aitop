@@ -85,6 +85,50 @@ func TestView_PricingStaleWarningHidden(t *testing.T) {
 	}
 }
 
+func TestWindowRowCacheEff_NoData(t *testing.T) {
+	l := newLayout(80)
+	row := windowRowCacheEff(l, "cache hit rate", 0, 0, 0, 0, 0, 0)
+	if strings.Count(row, "-") < 3 {
+		t.Errorf("expected three '-' placeholders when all windows are empty, got: %q", row)
+	}
+}
+
+func TestWindowRowCacheEff_Values(t *testing.T) {
+	l := newLayout(80)
+	// 80 hits out of 100 total = 80%
+	row := windowRowCacheEff(l, "cache hit rate", 80, 20, 80, 20, 80, 20)
+	if !strings.Contains(row, "80.0%") {
+		t.Errorf("expected 80.0%% in row, got: %q", row)
+	}
+}
+
+func TestWindowRowCacheEff_MixedWindows(t *testing.T) {
+	l := newLayout(80)
+	// 1m: 80% (good), 5m: 40% (warning), 15m: 10% (bad)
+	row := windowRowCacheEff(l, "cache hit rate", 80, 20, 40, 60, 10, 90)
+	if !strings.Contains(row, "80.0%") {
+		t.Errorf("expected 80.0%% for 1m window, got: %q", row)
+	}
+	if !strings.Contains(row, "40.0%") {
+		t.Errorf("expected 40.0%% for 5m window, got: %q", row)
+	}
+	if !strings.Contains(row, "10.0%") {
+		t.Errorf("expected 10.0%% for 15m window, got: %q", row)
+	}
+}
+
+func TestView_CacheHitRateRowPresent(t *testing.T) {
+	m := Model{
+		agg:   aggregator.New(),
+		width: 80,
+	}
+	m.snapshot = m.agg.Snapshot()
+	out := m.View().Content
+	if !strings.Contains(out, "cache hit rate") {
+		t.Error("expected 'cache hit rate' row in view output")
+	}
+}
+
 // lipglossVisibleWidth counts the visible runes in a string by stripping ANSI
 // escape sequences. We use a simple count here since lipgloss is already
 // handling the actual width math; we just want to verify it matches expectations.
