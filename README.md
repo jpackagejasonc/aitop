@@ -1,5 +1,7 @@
 # aitop
 
+[![CI](https://github.com/jpackagejasonc/aitop/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jpackagejasonc/aitop/actions/workflows/ci.yml)
+
 A `top`-like terminal dashboard for AI metrics. Tracks token usage, cost, and tool calls across your AI coding sessions in real time.
 
 Currently supports **Claude Code**. Designed to support additional providers (OpenAI, Ollama, LiteLLM, etc.) over time.
@@ -223,7 +225,7 @@ Move the binary somewhere on your `$PATH`, then run `aitop install --write` to w
 ```bash
 go test ./...
 go vet ./...
-govulncheck ./...   # go install golang.org/x/vuln/cmd/govulncheck@latest
+govulncheck ./...   # go install golang.org/x/vuln/cmd/govulncheck
 ```
 
 Tests live alongside their packages. The aggregator and claudecode pricing tests cover the core logic; run them before submitting changes.
