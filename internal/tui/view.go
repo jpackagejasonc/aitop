@@ -109,6 +109,10 @@ func (m Model) View() tea.View {
 		float64(s.Window15m.InputTokens+s.Window15m.OutputTokens)/15))
 	b.WriteString(windowRowInt64(l, "cache hits",
 		s.Window1m.CacheHits, s.Window5m.CacheHits, s.Window15m.CacheHits))
+	b.WriteString(windowRowCacheEff(l, "cache hit rate",
+		s.Window1m.CacheHits, s.Window1m.InputTokens,
+		s.Window5m.CacheHits, s.Window5m.InputTokens,
+		s.Window15m.CacheHits, s.Window15m.InputTokens))
 	b.WriteString(windowRowCost(l, "cost ($)",
 		s.Window1m.Cost, s.Window5m.Cost, s.Window15m.Cost))
 	b.WriteString(windowRow(l, "tool calls",
@@ -130,7 +134,7 @@ func (m Model) View() tea.View {
 	if total := sess.InputTokens + sess.CacheHits; total > 0 {
 		hitRate = float64(sess.CacheHits) / float64(total) * 100
 	}
-	b.WriteString(sessionRow(l, "cache hit rate", valueStyle.Render(fmt.Sprintf("%.1f%%", hitRate))))
+	b.WriteString(sessionRow(l, "cache hit rate", cacheEffStyle(l, hitRate).Render(fmt.Sprintf("%.1f%%", hitRate))))
 
 	if len(s.StopReasons) > 0 {
 		// Sort keys for deterministic output.
@@ -240,6 +244,37 @@ func windowRowPct(l layout, label string, e1, r1, e2, r2, e3, r3 int) string {
 		col.Render(f(e1, r1)) +
 		col.Render(f(e2, r2)) +
 		col.Render(f(e3, r3)) + "\n"
+}
+
+// cacheEffStyle returns the appropriate style for a cache hit rate percentage.
+// >= 60%: normal; >= 30%: accent (orange); < 30%: error (red).
+func cacheEffStyle(l layout, pct float64) lipgloss.Style {
+	switch {
+	case pct >= 60:
+		return l.value
+	case pct >= 30:
+		return l.accent
+	default:
+		return l.errCol
+	}
+}
+
+// windowRowCacheEff renders a cache hit rate row for the rolling window table.
+// Each window is coloured independently based on its own rate.
+// Shows "-" when there is no token data in a window.
+func windowRowCacheEff(l layout, label string, hits1, in1, hits5, in5, hits15, in15 int64) string {
+	cell := func(hits, input int64) string {
+		total := hits + input
+		if total == 0 {
+			return l.value.Render("-")
+		}
+		pct := float64(hits) / float64(total) * 100
+		return cacheEffStyle(l, pct).Render(fmt.Sprintf("%.1f%%", pct))
+	}
+	return l.label.Render(label) +
+		cell(hits1, in1) +
+		cell(hits5, in5) +
+		cell(hits15, in15) + "\n"
 }
 
 func sessionRow(l layout, label, value string) string {

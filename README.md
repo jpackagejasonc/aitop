@@ -19,6 +19,7 @@ input tokens           12450         31200         87600
 output tokens          3820          9100          24300
 tok/min                16270         8060          5453
 cache hits             8900          22400         61200
+cache hit rate         41.7%         41.8%         41.1%
 cost ($)               $0.0142       $0.0381       $0.1024
 tool calls             9             24            63
 
@@ -39,6 +40,8 @@ q: quit  •  providers: claude code
 ```
 
 Rolling windows (1m / 5m / 15m) behave like load averages in `top` — a quick read on recent activity vs. longer trends. The session section accumulates totals from when `aitop` was started.
+
+**Cache hit rate** shows `cache_read / (cache_read + input)` for each rolling window. It turns orange below 60% and red below 30%. A sudden drop usually means a compaction just reset the context.
 
 **Context window** shows an estimate of current context size (`input + cache_read + cache_write` tokens from the last completed turn) against the 200K limit. It turns orange above 60% and red above 85%. After a compaction the figure drops as the conversation is summarized. **Compactions** counts how many times automatic context compaction has run.
 
@@ -147,7 +150,6 @@ These are estimates. Check your Anthropic console for authoritative billing.
 
 - **Tool call duration** — pair `PreToolUse` and `PostToolUse` events by tool call ID to track per-tool latency (e.g. how long a `Bash` or `Edit` call takes)
 - **Projected hourly cost** — extrapolate a $/hr rate from the rolling window, similar to how cloud cost dashboards show spend rate
-- **Cache efficiency rate** — add a cache hit % row to the rolling window table (cache_read / total_input_tokens), colour-coded green/yellow/red, so efficiency trends are visible alongside the raw hit count already shown
 - **Cache token breakdown** — split the input token count into fresh context, cache writes, and cache reads so it is clear where tokens are coming from each window
 - **Cross-model cost comparison** — using the actual token mix for the current session, show what the same usage would have cost on each model family; useful when deciding whether to switch models mid-session
 - **Alerts** — contextual warnings surfaced in the TUI: configurable daily budget exceeded, high burn rate, spending with zero output tokens (likely a tool loop), context window near full, cache efficiency collapsed after a compaction
