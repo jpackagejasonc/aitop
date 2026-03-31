@@ -28,11 +28,12 @@ const (
 // layout holds pre-built column styles for the current terminal width.
 // Recomputed on every View() call so resizes take effect immediately.
 type layout struct {
-	label  lipgloss.Style
-	value  lipgloss.Style
-	accent lipgloss.Style
-	errCol lipgloss.Style
-	sep    string
+	label    lipgloss.Style
+	value    lipgloss.Style
+	accent   lipgloss.Style
+	errCol   lipgloss.Style
+	errLabel lipgloss.Style
+	sep      string
 }
 
 func newLayout(width int) layout {
@@ -45,11 +46,12 @@ func newLayout(width int) layout {
 	}
 	sepWidth := labelColWidth + 3*valWidth
 	return layout{
-		label:  labelStyle.Width(labelColWidth),
-		value:  valueStyle.Width(valWidth),
-		accent: accentStyle.Width(valWidth),
-		errCol: errorStyle.Width(valWidth),
-		sep:    borderStyle.Render(strings.Repeat("─", sepWidth)),
+		label:    labelStyle.Width(labelColWidth),
+		value:    valueStyle.Width(valWidth),
+		accent:   accentStyle.Width(valWidth),
+		errCol:   errorStyle.Width(valWidth),
+		errLabel: errorStyle.Width(labelColWidth),
+		sep:      borderStyle.Render(strings.Repeat("─", sepWidth)),
 	}
 }
 
@@ -84,7 +86,7 @@ func (m Model) View() tea.View {
 		float64(s.Window15m.Requests)/15))
 
 	if s.Window1m.Errors > 0 || s.Window5m.Errors > 0 || s.Window15m.Errors > 0 {
-		b.WriteString(l.errCol.Render("errors") +
+		b.WriteString(l.errLabel.Render("errors") +
 			l.errCol.Render(fmt.Sprintf("%d", s.Window1m.Errors)) +
 			l.errCol.Render(fmt.Sprintf("%d", s.Window5m.Errors)) +
 			l.errCol.Render(fmt.Sprintf("%d", s.Window15m.Errors)) + "\n")
@@ -223,7 +225,11 @@ func windowRowPct(l layout, label string, e1, r1, e2, r2, e3, r3 int) string {
 		if requests == 0 {
 			return "-"
 		}
-		return fmt.Sprintf("%.1f%%", float64(errors)/float64(requests)*100)
+		pct := float64(errors) / float64(requests) * 100
+		if pct > 100 {
+			pct = 100
+		}
+		return fmt.Sprintf("%.1f%%", pct)
 	}
 	hasErrors := e1 > 0 || e2 > 0 || e3 > 0
 	col := l.value

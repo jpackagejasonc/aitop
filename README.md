@@ -147,9 +147,28 @@ These are estimates. Check your Anthropic console for authoritative billing.
 
 - **Tool call duration** — pair `PreToolUse` and `PostToolUse` events by tool call ID to track per-tool latency (e.g. how long a `Bash` or `Edit` call takes)
 - **Projected hourly cost** — extrapolate a $/hr rate from the rolling window, similar to how cloud cost dashboards show spend rate
+- **Cache efficiency rate** — add a cache hit % row to the rolling window table (cache_read / total_input_tokens), colour-coded green/yellow/red, so efficiency trends are visible alongside the raw hit count already shown
+- **Cache token breakdown** — split the input token count into fresh context, cache writes, and cache reads so it is clear where tokens are coming from each window
+- **Cross-model cost comparison** — using the actual token mix for the current session, show what the same usage would have cost on each model family; useful when deciding whether to switch models mid-session
+- **Alerts** — contextual warnings surfaced in the TUI: configurable daily budget exceeded, high burn rate, spending with zero output tokens (likely a tool loop), context window near full, cache efficiency collapsed after a compaction
+- **Session tagging** — label a session via an environment variable and track per-feature or per-initiative costs; useful for understanding where spend goes across a project
+- **Historical summaries** — persist session totals on exit and expose daily/weekly/monthly aggregates so cost trends are visible across sessions, not just within the current one
+- **Sparklines** — inline ASCII trend graphs alongside the rolling window numbers to make the direction of a metric visible at a glance
+- **Live pricing** — fetch current model pricing from an upstream source (e.g. LiteLLM's pricing database) on startup and cache it locally for 24 hours, replacing the hardcoded table that requires a code change to update
 - **Latency and TTFT** — both are currently unsupported for Claude Code. Hooks fire after a response completes with no request-start timestamp, so there is nothing to diff against. A local proxy provider that intercepts at the API level would unblock both metrics.
 - **Output quality metrics** — groundedness/faithfulness, relevance, toxicity and safety, and LLM-as-a-judge scoring require access to the actual prompt and response content. Claude Code hooks only expose token counts and stop reasons; a local proxy provider that intercepts at the API level would make this possible. `max_tokens` stop reason frequency is the one available quality signal with the current hook architecture — a high rate suggests responses are being truncated.
 - **Additional providers** — OpenAI, Ollama, LiteLLM; each would implement the `Provider` interface with a collection strategy suited to that stack (SDK wrapper, API polling, or callback integration)
+
+## Similar projects
+
+Several other tools take a similar approach to monitoring Claude Code sessions — worth knowing about if you want a different language runtime or feature set:
+
+| Project | Language | Notes |
+|---|---|---|
+| [agtop](https://github.com/ldegio/agtop) | Node.js | Closest sibling to aitop; hook-based live dashboard |
+| [claudetop](https://github.com/liorwn/claudetop) | Bash | Cost/burn-rate focus; no compiled binary required |
+| [Claude-Code-Usage-Monitor](https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor) | Python | Predictive analytics, plan-limit tracking |
+| [ccboard](https://github.com/FlorianBruniaux/ccboard) | Rust | Broader scope — multi-editor, web UI, budget forecasting |
 
 ## Security
 
